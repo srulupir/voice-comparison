@@ -86,8 +86,17 @@
         <p id="errorMessage" class="error" style="display:none;">Unsupported file format. Please select WAV, MP3, or OGG files.</p>
 
         <!-- Результат сравнения голосов -->
+        {% if similarity_percentage %}
+        <p>Similarity percentage: {{ similarity_percentage }}%</p>
+        {% endif %}
+
         {% if distance %}
         <p>Distance between voices: {{ distance }}</p>
+        {% endif %}
+
+        <!-- Итог сравнения голосов -->
+        {% if comparison_result %}
+        <p>{{ comparison_result }}</p>
         {% endif %}
 
         <!-- Предупреждение о необходимости прикрепить оба файла -->

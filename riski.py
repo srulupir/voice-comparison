@@ -41,6 +41,10 @@ def compare_voices(file1, file2):
 
     print("Distance:", distance)
 
+    # Нормализация расстояния для вычисления процента схожести
+    max_distance = 50  # Примерное максимальное расстояние между голосами
+    similarity_percentage = max(0, round((1 - distance / max_distance) * 100, 1))
+
     # Визуализация спектрограммы
     plt.figure(figsize=(10, 4))
     plt.subplot(1, 2, 1)
@@ -58,18 +62,16 @@ def compare_voices(file1, file2):
     plt.savefig(spectrogram_path)  # Сохранение спектрограммы в статический файл
     plt.close()
 
-    return distance
-
-
+    return round(distance, 1), similarity_percentage
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     distance = None
+    similarity_percentage = None
     error = None
     file1_info = None
     file2_info = None
-    identical_content_message = None
- #   comparison_path = None
+    comparison_result = None
 
     if request.method == 'POST':
         file1 = request.files['file1']
@@ -89,15 +91,19 @@ def index():
             file1.save(file1_path)
             file2.save(file2_path)
 
-            distance = compare_voices(file1_path, file2_path)
-
-            # Проверка на идентичное содержимое файлов
-            if distance == 0:
-                identical_content_message = "Files have identical content."
+            distance, similarity_percentage = compare_voices(file1_path, file2_path)
 
             # Получение информации о файлах
             file1_info = {'name': file1.filename, 'size': os.path.getsize(file1_path)}
             file2_info = {'name': file2.filename, 'size': os.path.getsize(file2_path)}
+
+            # Определение результата сравнения
+            if similarity_percentage >= 95:
+                comparison_result = "Your voices are identical or very similar"
+            elif similarity_percentage >= 75:
+                comparison_result = "Your voices are quite similar"
+            else:
+                comparison_result = "Your voices are not very similar"
 
             # Удаление загруженных файлов после обработки
             if os.path.exists(file1_path):
@@ -105,7 +111,7 @@ def index():
             if os.path.exists(file2_path):
                 os.remove(file2_path)
 
-    return render_template('index.html', distance=distance, error=error, file1_info=file1_info, file2_info=file2_info, identical_content_message=identical_content_message)
+    return render_template('index.html', distance=distance, similarity_percentage=similarity_percentage, error=error, file1_info=file1_info, file2_info=file2_info, comparison_result=comparison_result)
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
